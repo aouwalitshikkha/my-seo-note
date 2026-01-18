@@ -1,2 +1,2 @@
-# MY SEO NOTE( INDEX)
+# MY SEO NOTES ( INDEX)
 
