@@ -25,26 +25,36 @@ jobs:
         shell: pwsh
         run: |
           $content = @()
-          $content += "# MY SEO NOTES ( INDEX)"
+          $content += "# MY SEO NOTES (INDEX)"
           $content += ""
 
+          # Root path (important for Windows runner)
+          $root = (Get-Location).Path
+
           function Add-Folders($path, $level = 0) {
-              Get-ChildItem -Path $path -Directory |
+              Get-ChildItem -LiteralPath $path -Directory |
               Where-Object { $_.Name -notmatch '^\.(git|github)$' } |
               Sort-Object Name |
               ForEach-Object {
                   $indent = ('  ' * $level)
-                  $relativePath = $_.FullName.Replace((Get-Location).Path + '\', '').Replace('\', '/')
+
+                  # Build relative path
+                  $relativePath = $_.FullName.Replace($root, '').TrimStart('\')
+                  $relativePath = $relativePath.Replace('\', '/')
                   $encodedPath = [System.Uri]::EscapeUriString($relativePath)
 
+                  # Add folder to README
                   $content += "$indent- 📁 [$($_.Name)]($encodedPath/)"
 
+                  # Recurse into subfolders
                   Add-Folders $_.FullName ($level + 1)
               }
           }
 
-          Add-Folders (Get-Location)
+          # Start recursion from repo root
+          Add-Folders $root
 
+          # Write README.md
           $content | Set-Content README.md -Encoding utf8
 
       - name: Commit and push if README changed
