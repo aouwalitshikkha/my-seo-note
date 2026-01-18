@@ -18,8 +18,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true
 
       - name: Generate README.md
         shell: pwsh
@@ -28,33 +26,34 @@ jobs:
           $content += "# MY SEO NOTES (INDEX)"
           $content += ""
 
-          # Root path (important for Windows runner)
-          $root = (Get-Location).Path
-
-          function Add-Folders($path, $level = 0) {
-              Get-ChildItem -LiteralPath $path -Directory |
+          function Add-FolderTree($basePath, $relativePath = "", $level = 0) {
+              Get-ChildItem -LiteralPath $basePath -Directory |
               Where-Object { $_.Name -notmatch '^\.(git|github)$' } |
               Sort-Object Name |
               ForEach-Object {
                   $indent = ('  ' * $level)
+                  $currentRelative = if ($relativePath) {
+                      "$relativePath/$($_.Name)"
+                  } else {
+                      $_.Name
+                  }
 
-                  # Build relative path
-                  $relativePath = $_.FullName.Replace($root, '').TrimStart('\')
-                  $relativePath = $relativePath.Replace('\', '/')
-                  $encodedPath = [System.Uri]::EscapeUriString($relativePath)
+                  $encoded = [System.Uri]::EscapeUriString($currentRelative)
 
-                  # Add folder to README
-                  $content += "$indent- 📁 [$($_.Name)]($encodedPath/)"
+                  $content += "$indent- 📁 [$($_.Name)]($encoded/)"
 
-                  # Recurse into subfolders
-                  Add-Folders $_.FullName ($level + 1)
+                  Add-FolderTree $_.FullName $currentRelative ($level + 1)
               }
           }
 
-          # Start recursion from repo root
-          Add-Folders $root
+          # Start from repo root
+          Add-FolderTree (Get-Location).Path
 
-          # Write README.md
+          if ($content.Count -le 2) {
+              $content += ""
+              $content += "_No folders found._"
+          }
+
           $content | Set-Content README.md -Encoding utf8
 
       - name: Commit and push if README changed
