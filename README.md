@@ -1,1 +1,2 @@
-"# my-seo-note" 
+# MY SEO NOTE( INDEX)
+
