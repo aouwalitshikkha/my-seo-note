@@ -1,4 +1,3 @@
-# MY SEO NOTES (INDEX)
+# MY NOTES
 
-
-_No folders found._
+- 📘 [Structured Data Referrence](Structured%20Data%20Referrence/)
